@@ -418,6 +418,8 @@ public class OAuth20Service extends OAuthService {
         }
 
         logRequestWithParams("revoke token", request);
+        // TODO: remove
+        request.addHeader("x-decider-overrides", "tfe_route:hawkeye_oauth2_endpoints=on");
 
         return request;
     }

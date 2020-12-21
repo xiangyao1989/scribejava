@@ -12,6 +12,8 @@ import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.AccessTokenRequestParams;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.revoke.TokenTypeHint;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,14 +77,29 @@ public class Twitter20WithPKCEExample {
         System.out.println("Got the Access Token!");
         System.out.println("(The raw response looks like this: " + accessToken.getRawResponse() + "')");
 
+        fetchResource(service, accessToken, PROTECTED_RESOURCE_URL);
+
         System.out.println("Refreshing the Access Token...");
         accessToken = service.refreshAccessToken(accessToken.getRefreshToken(), null, clientId);
         System.out.println("Refreshed the Access Token!");
         System.out.println("(The raw response looks like this: " + accessToken.getRawResponse() + "')");
         System.out.println();
 
+        fetchResource(service, accessToken, PROTECTED_RESOURCE_URL);
+
+        System.out.println("Revoking the Refresh Token...");
+        service.revokeToken(accessToken.getRefreshToken(), TokenTypeHint.REFRESH_TOKEN);
+        System.out.println("Revoked the Refresh Token!");
+        // Access Token is still valid
+        fetchResource(service, accessToken, PROTECTED_RESOURCE_URL);
+
+        System.out.println("Revoking the Access Token...");
+        service.revokeToken(accessToken.getAccessToken(), TokenTypeHint.ACCESS_TOKEN);
+        System.out.println("Revoked the Access Token!");
+        // Both Access Token and Refresh Token are revoked at this moment
+        fetchResource(service, accessToken, PROTECTED_RESOURCE_URL);
+
         // Now let's go and ask for a protected resource!
-        System.out.println("Now we're going to access a protected resource...");
         while (true) {
             System.out.println("Paste fieldnames to fetch (leave empty to get profile, 'exit' to stop example)");
             System.out.print(">>");
@@ -97,15 +114,21 @@ public class Twitter20WithPKCEExample {
             } else {
                 requestUrl = PROTECTED_RESOURCE_URL + "?fields=" + query;
             }
-
-            final OAuthRequest request = new OAuthRequest(Verb.GET, requestUrl);
-            service.signRequest(accessToken, request);
-            System.out.println();
-            try (Response response = service.execute(request)) {
-                System.out.println(response.getCode());
-                System.out.println(response.getBody());
-            }
-            System.out.println();
+            fetchResource(service, accessToken, requestUrl);
         }
+    }
+
+    private static void fetchResource(OAuth20Service service, OAuth2AccessToken accessToken, String requestUrl)
+        throws IOException, InterruptedException, ExecutionException {
+        // Now let's go and ask for a protected resource!
+        System.out.println();
+        System.out.println("Now we're going to access a protected resource...");
+        final OAuthRequest request = new OAuthRequest(Verb.GET, requestUrl);
+        service.signRequest(accessToken, request);
+        try (Response response = service.execute(request)) {
+            System.out.println(response.getCode());
+            System.out.println(response.getBody());
+        }
+        System.out.println();
     }
 }
