@@ -33,7 +33,7 @@ public class Twitter20WithPKCEExample {
         final String clientId = "z5FF7tXxFGgfQqINRXprtUXcq";
         final String secretState = "secret" + new Random().nextInt(999_999);
         final OAuth20Service service = new ServiceBuilder(clientId)
-                .defaultScope("read_write_dm_scope") // replace with desired scope
+                .defaultScope("read_write_dm_scope read_write_scope read_scope") // replace with desired scope
                 .callback("https://twitter.com/")
                 .build(TwitterApi20.instance());
 
